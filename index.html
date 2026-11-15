@@ -327,6 +327,31 @@ function setMediaSession(t) {
   h('seekforward', d => { audio.currentTime = Math.min(audio.duration, audio.currentTime + (d.seekOffset || 10)); });
 }
 
+/* ---------- Android app: native playback service ----------
+   In the installed Android app (Capacitor), a native service keeps music playing with the
+   screen off and provides notification / lock-screen / headphone controls. No-op on the web. */
+const NATIVE = window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === 'android' ? window.Capacitor : null;
+function nativeUpdate() {
+  if (!NATIVE) return;
+  const t = queue.length ? byId(queue[order[pos]]) : null;
+  if (!t) return;
+  NATIVE.nativePromise('MediaControls', 'update', {
+    title: t.title, artist: t.artist || sourceLabel || '',
+    playing: !audio.paused, duration: isFinite(audio.duration) ? audio.duration : 0, position: audio.currentTime || 0,
+  }).catch(() => {});
+}
+if (NATIVE) {
+  ['play', 'pause', 'loadedmetadata', 'seeked'].forEach(ev => audio.addEventListener(ev, nativeUpdate));
+  NATIVE.addListener('MediaControls', 'action', d => {
+    if (!d) return;
+    if (d.action === 'play') audio.play();
+    else if (d.action === 'pause') audio.pause();
+    else if (d.action === 'next') next();
+    else if (d.action === 'prev') prev();
+    else if (d.action === 'seekto' && typeof d.position === 'number') audio.currentTime = d.position;
+  });
+}
+
 /* ---------- player UI ---------- */
 function updatePlayerUI() {
   const t = queue.length ? byId(queue[order[pos]]) : null;
@@ -537,7 +562,8 @@ function playlistMenu(id) {
   } catch {}
   render(); updatePlayerUI();
   if (navigator.storage?.persist) navigator.storage.persist();
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  // The Android app bundles its files, so only the web version needs the offline service worker.
+  if ('serviceWorker' in navigator && !window.Capacitor) navigator.serviceWorker.register('sw.js').catch(() => {});
 })();
 </script>
 </body>

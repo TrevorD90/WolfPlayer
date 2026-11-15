@@ -1,4 +1,20 @@
-# WolfPlayer — personal offline music player (PWA)
+# WolfPlayer — personal offline music player
+
+## Android app (APK) — works in Samsung Kids and Routines
+Every push to `main` builds a real Android app with GitHub Actions and publishes it to the
+**latest** release: https://github.com/TrevorD90/wolfplayer/releases/latest
+
+1. On your phone, open that link and download **WolfPlayer.apk**.
+2. Open the download. If Android asks, allow your browser/Files app to "install unknown apps".
+3. Open WolfPlayer and allow notifications (needed for lock-screen controls and screen-off playback).
+4. Add your music again — the APK has its own storage, separate from the Chrome version.
+5. To update later, download and install the new APK; your songs and playlists stay.
+
+How it's built: the same `index.html` runs inside a Capacitor WebView (`android/`), plus a small
+native media-playback service (`PlaybackService.java`) for screen-off playback and media controls.
+Local build: `npm ci && npm run sync`, then open `android/` in Android Studio.
+
+## Web version (PWA)
 
 ## Put it on your phone (GitHub Pages, free, ~5 min)
 1. Create a new public GitHub repo, e.g. `wolfplayer`.
